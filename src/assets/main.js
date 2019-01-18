@@ -28,7 +28,7 @@ window.githubLogin = () => {
   xhr.send()
 }
 
-window.sendRequest = () => {
+window.sendRequest = (network) => {
   const button = document.getElementById("button"),
         address = document.getElementById("input"),
         error = document.getElementById("error"),
@@ -42,15 +42,16 @@ window.sendRequest = () => {
     button.innerText = "Loading.."
 
     const xhr = new XMLHttpRequest()
-    xhr.open("POST", `${backendUrl}/agi/${location.search.split("=")[1]}/${address.value}`)
+    xhr.open("POST", `${backendUrl}/agi`)
+    xhr.setRequestHeader("Content-Type", "application/json");
     xhr.onload = function (e) {
       if (xhr.readyState === 4) {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.response).result,
                 txHash = response.transactionHash || ""
-
+          const etherscanURI = network === 'mainnet' ? `etherscan.io` : `${network}.etherscan.io`
           notification.style.display = "block"
-          notification.innerHTML = `<p>Success! <br /> Tx Hash: <a href="https://kovan.etherscan.io/tx/${txHash}" target="_blank">${txHash}</a></p>`
+          notification.innerHTML = `<p>Success! <br /> Tx Hash: <a href="https://${etherscanURI}/tx/${txHash}" target="_blank">${txHash}</a></p>`
         } else {
           const reason = JSON.parse(xhr.response)
 
@@ -62,7 +63,11 @@ window.sendRequest = () => {
         button.removeAttribute("disabled")
       }
     }
-    xhr.send()
+    xhr.send(JSON.stringify({
+      network,
+      code: location.search.split("=")[1],
+      address: address.value
+    }))
   } else {
     error.style.display = "block"
     button.removeAttribute("disabled")
